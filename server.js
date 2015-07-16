@@ -6,7 +6,7 @@ var io = require('socket.io')(http);
 
 app.use(express.static('public'));
 
-playerId = 1;
+idCounter = 1;
 
 var world = {
   height: 10000,
@@ -18,6 +18,7 @@ var world = {
 var lastUpdate = new Date();
 
 var tick = function tick(data) {
+  console.log(data);
   var player = world.objects[data.id];
   player.angle = data.angle;
 }
@@ -27,17 +28,20 @@ function getRandomInt(min, max) {
 }
 
 var generateWorld = function generateWorld() {
-  for (var i = 0; i < 1000; i++) {
-    world.objects.push({
+  for (idCounter = 1; idCounter < 1000; idCounter++) {
+    world.objects[idCounter] = {
       // not a player
       type: 0,
       pos: {
         x: getRandomInt(0, world.width),
         y: getRandomInt(0, world.height),
-      }
-    });
+      },
+      radius: 10
+    };
   }
-}
+};
+
+generateWorld();
 
 var updateWorld = function updateWorld(data) {
   var currUpdate = new Date();
@@ -62,18 +66,23 @@ io.on('connection', function(socket) {
   socket.on('disconnect', function() {
 
   });
-  
-  currId = playerId++;
+
+  currId = idCounter++;
+
   socket.emit('init', {
     world: world,
     id: currId
   });
 
-  world.objects.push({
+  world.objects[currId] = {
     type: 1,
     id: currId,
-
-  });
+    pos: {
+      x: Math.floor(world.width / 2),
+      y: Math.floor(world.height / 2)
+    },
+    radius: 30
+  };
 
   socket.on('tick', function(data) {
     tick(data);
