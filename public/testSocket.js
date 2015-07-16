@@ -20,7 +20,7 @@ var makeObject = function makeObject(obj) {
 }
 
 CanvasRenderingContext2D.prototype.clear =
-  CanvasRenderingContext2D.prototype.clear || function (preserveTransform) {
+  CanvasRenderingContext2D.prototype.clear || function(preserveTransform) {
     if (preserveTransform) {
       this.save();
       this.setTransform(1, 0, 0, 1, 0, 0);
@@ -31,15 +31,17 @@ CanvasRenderingContext2D.prototype.clear =
     if (preserveTransform) {
       this.restore();
     }
-};
+  };
 
 document.addEventListener('DOMContentLoaded', function() {
   var canvas = document.getElementById("canvas");
   var ctx = canvas.getContext("2d");
+  var world = null;
+  var id = null;
 
   socket.on('connect', function() {
     socket.on('init', function(initData) {
-      var id = initData.id;
+      id = initData.id;
 
       setInterval(function() {
         socket.emit('tick', {
@@ -48,24 +50,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       }, 500);
 
-      socket.on('world', function(world) {
-        ctx.clear(true);
-        ctx.save();
-
-        var me = world.objects[id];
-        ctx.translate(-me.pos.x + 500 / 2, -me.pos.y + 500 / 2);
-        var obj = makeObject(me);
-        ctx.fill(obj);
-
-        for (var i = 1; i < world.objects.length; i++) {
-          var o = world.objects[i];
-          if (!o) continue;
-          var obj = makeObject(o);
-          ctx.fill(obj);
-        }
-
-        ctx.restore();
+      socket.on('world', function(data) {
+        world = data;
       });
     });
   });
+
+  var draw = function draw() {
+    if (world) {
+      ctx.clear(true);
+      ctx.save();
+
+      var me = world.objects[id];
+      ctx.translate(-me.pos.x + 500 / 2, -me.pos.y + 500 / 2);
+      var obj = makeObject(me);
+      ctx.fill(obj);
+
+      for (var i = 1; i < world.objects.length; i++) {
+        var o = world.objects[i];
+        if (!o) continue;
+        var obj = makeObject(o);
+        ctx.fill(obj);
+      }
+
+      ctx.restore();
+    }
+
+    window.requestAnimationFrame(draw);
+  }
+  window.requestAnimationFrame(draw);
 });
