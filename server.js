@@ -8,6 +8,9 @@ app.use(express.static('public'));
 
 io.on('connection', function(socket){
   console.log('a user connected');
+  socket.on('tick', function(data){
+    console.log(data);
+  })
 });
 
 http.listen(3000, function(){
