@@ -6,19 +6,21 @@ var io = require('socket.io')(http);
 
 app.use(express.static('public'));
 
-playerIdCounter = 1;
-
 var GENERATED_OBJ_COUNT = 1000;
-var eatedFood = [];
-var foodGenerationSpeed = 1000; // 1 max
+var FOOD_GENERATION_SPEED = 1000; // 1 max
 var STARTING_PLAYER_RADIUS = 30;
 var STARTING_SPEED = 400;
 var WORLD_UPDATE_RATE = 1000 / 60;
+var WORLD_HEIGHT = 10000;
+var WORLD_WIDTH = 10000;
 
+playerIdCounter = 1;
+var eatedFood = [];
+var eatedPlayers = [];
 
 var world = {
-  height: 1000,
-  width: 1000,
+  height: WORLD_HEIGHT,
+  width: WORLD_WIDTH,
   objects: [],
   players: []
 };
@@ -46,7 +48,7 @@ var generateWorld = function generateWorld() {
 
 var generateFood = function generateFood() {
   var foodDificit = eatedFood.length;
-  var newFoodCount = getRandomInt(0, foodDificit) / foodGenerationSpeed;
+  var newFoodCount = getRandomInt(0, foodDificit) / FOOD_GENERATION_SPEED;
   var newFood = [];
   for (var i = 0; i < newFoodCount; i++) {
     var id = eatedFood.pop();
@@ -74,7 +76,6 @@ var generateFood = function generateFood() {
 generateWorld();
 
 var updateWorld = function updateWorld(data) {
-
   generateFood();
   for (var i = 0; i < playerIdCounter; i++) {
     var player = world.players[i];
@@ -96,15 +97,16 @@ var updateWorld = function updateWorld(data) {
     player.pos.x = Math.max(0, Math.min(player.pos.x, world.width));
     player.pos.y = Math.max(0, Math.min(player.pos.y, world.height));
 
-    handleOverlap(player, world);
+    handleCollision(player, world);
   }
 
   lastUpdate = new Date();
 }
 
-var handleOverlap = function(player, world) {
-
+var handleCollision = function(player, world) {
   var recentlyEatedFood = [];
+  var recentlyEatedPlayers = [];
+
   for (var i = 0; i < world.objects.length; i++) {
     var object = world.objects[i];
     if (!object) {
@@ -112,26 +114,48 @@ var handleOverlap = function(player, world) {
       continue;
     }
 
-    if (hasOverlap(player, object)) {
+    if (hasCollision(player, object)) {
       player.score = player.score + 1 || 1;
       player.radius += 0.1;
-      player.speed = Math.max(player.speed - 0.5, 50);
       eatedFood.push(i);
       recentlyEatedFood.push(i);
       delete world.objects[i];
     }
   }
-  
+
+  for (var i = 0; i < world.players.length; i++) {
+    var pl = world.players[i];
+    if (!pl) {
+      // if vacant
+      continue;
+    }
+
+    if (hasCollision(player, pl)) {
+      player.score = player.score + pl.radius || pl.radius;
+      player.radius += 0.1;
+      eatedPlayers.push(i);
+      recentlyEatedPlayers.push(i);
+      delete world.objects[i];
+    }
+  }
+
   io.sockets.emit('eatFood', {
     eatedFood: recentlyEatedFood
   });
+}
+
+var hasCollision = function(player, object) {
+  var distance = Math.sqrt(
+    Math.pow(player.pos.x - object.pos.x, 2) +
+    Math.pow(player.pos.y - object.pos.y, 2));
+  return distance < player.radius + object.radius;
 }
 
 var hasOverlap = function(player, object) {
   var distance = Math.sqrt(
     Math.pow(player.pos.x - object.pos.x, 2) +
     Math.pow(player.pos.y - object.pos.y, 2));
-  return distance <= player.radius - object.radius / 2;
+  return distance < Math.max(player.radius, object.radius);
 }
 
 io.on('connection', function(socket) {
