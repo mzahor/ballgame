@@ -7,10 +7,11 @@ var io = require('socket.io')(http);
 app.use(express.static('public'));
 
 playerIdCounter = 1;
+var GENERATED_OBJ_COUNT = 1000;
 
 var world = {
-  height: 10000,
-  width: 10000,
+  height: 1000,
+  width: 1000,
   objects: [],
   players: [],
   default_speed: 400 // pix/sec
@@ -23,7 +24,7 @@ function getRandomInt(min, max) {
 }
 
 var generateWorld = function generateWorld() {
-  for (var i = 1; i < 1000; i++) {
+  for (var i = 1; i < GENERATED_OBJ_COUNT; i++) {
     world.objects[i] = {
       // not a player
       type: 0,
@@ -49,6 +50,10 @@ var updateWorld = function updateWorld(data) {
 
     var currUpdate = new Date();
     var h = (player.speed || world.default_speed) * (currUpdate - lastUpdate) / 1000;
+
+    // console.log('angle: ', player.angle)
+    // console.log("x move: ", Math.cos(player.angle) * h)
+    // console.log("y move: ", Math.sin(player.angle) * h)
 
     player.pos.x += Math.cos(player.angle) * h
     player.pos.y += Math.sin(player.angle) * h
@@ -85,7 +90,7 @@ io.on('connection', function(socket) {
   });
 
   socket.on('clientTick', function(pack) {
-    var player = world.objects[pack.id];
+    var player = world.players[pack.id];
     player.angle = pack.angle;
   });
 });
