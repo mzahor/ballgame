@@ -112,6 +112,7 @@ io.on('connection', function(socket) {
     radius: STARTION_PLAYER_RADIUS,
     angle: 0,
     speed: STARTING_SPEED,
+    name: 'player' + currId,
     color: "2353ab"
   };
 

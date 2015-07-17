@@ -31,8 +31,8 @@ CanvasRenderingContext2D.prototype.clear =
 
 document.addEventListener('DOMContentLoaded', function() {
   var canvas = document.getElementById("canvas");
-   canvas.width = CANV_WIDTH;
-   canvas.height = CANV_HEIGHT;
+  canvas.width = CANV_WIDTH;
+  canvas.height = CANV_HEIGHT;
   mousePos = {};
 
   canvas.addEventListener('mousemove', function(event) {
@@ -119,6 +119,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
       renderObjects(ctx, world.objects);
       renderObjects(ctx, world.players);
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#aaaaaa';
+      ctx.font = 'bold 40px serif'
+      var width = ctx.measureText(me.name).width;
+      var height = ctx.measureText("w").width;
+      ctx.fillText(me.name, me.pos.x - width / 2, me.pos.y + height / 2);
+      ctx.restore();
 
       ctx.restore();
     }
