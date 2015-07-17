@@ -97,11 +97,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var renderObjects = function renderObjects(ctx, objArray) {
     for (var i = 1; i < objArray.length; i++) {
-      var o = objArray[i];
-      if (!o) continue;
-      var obj = makeObject(o);
-      ctx.fillStyle = '#' + o.color;
-      ctx.fill(obj);
+      var object = objArray[i];
+      if (!object) continue;
+      var pathObj = makeObject(object);
+      ctx.fillStyle = '#' + object.color;
+      ctx.fill(pathObj);
+
+      if (object.name) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'yellow';
+        ctx.font = 'bold 20px serif'
+        var width = ctx.measureText(object.name).width;
+        var height = ctx.measureText("w").width;
+        ctx.fillText(object.name, object.pos.x - width / 2, object.pos.y + height / 2);
+        ctx.restore();
+      }
     }
   }
 
@@ -119,15 +130,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       renderObjects(ctx, world.objects);
       renderObjects(ctx, world.players);
-
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = '#aaaaaa';
-      ctx.font = 'bold 40px serif'
-      var width = ctx.measureText(me.name).width;
-      var height = ctx.measureText("w").width;
-      ctx.fillText(me.name, me.pos.x - width / 2, me.pos.y + height / 2);
-      ctx.restore();
 
       ctx.restore();
     }
