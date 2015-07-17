@@ -68,11 +68,20 @@ var updateWorld = function updateWorld(data) {
 }
 
 var handleOverlap = function(player, world) {
-  for (var i = 0; i < playerIdCounter; i++) {
-    var player = world.players[i];
-    if (!player) {
+  for (var i = 0; i < world.objects.length; i++) {
+    var object = world.objects[i];
+    if (!object) {
       // if vacant
       continue;
+    }
+
+    if (hasOverlap(player, object)) {
+      player.score = player.score + 1 || 1;
+      player.radius += 0.1;
+      delete world.objects[i];
+      io.sockets.emit('eatFood', {
+        id: i
+      });
     }
   }
 }
@@ -81,6 +90,7 @@ var hasOverlap = function(player, object) {
   var distance = Math.sqrt(
     Math.pow(player.pos.x - object.pos.x, 2) +
     Math.pow(player.pos.y - object.pos.y, 2));
+  return distance <= player.radius - object.radius / 2;
 }
 
 io.on('connection', function(socket) {

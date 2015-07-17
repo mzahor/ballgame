@@ -36,93 +36,97 @@ document.addEventListener('DOMContentLoaded', function() {
   mousePos = {};
 
   canvas.addEventListener('mousemove', function(event) {
-      mousePos.x = event.offsetX;
-      mousePos.y = event.offsetY;
-      var me = world.players[id];
+    mousePos.x = event.offsetX;
+    mousePos.y = event.offsetY;
+    var me = world.players[id];
 
-      me.angle = Math.atan2(mousePos.y - CANV_HEIGHT / 2, mousePos.x - CANV_WIDTH / 2);
+    me.angle = Math.atan2(mousePos.y - CANV_HEIGHT / 2, mousePos.x - CANV_WIDTH / 2);
   });
 
-var ctx = canvas.getContext("2d");
-var world = null;
-var id = null;
-var lastUpdate = new Date();
+  var ctx = canvas.getContext("2d");
+  var world = null;
+  var id = null;
+  var lastUpdate = new Date();
 
-socket.on('connect', function() {
-  socket.on('init', function(pack) {
-    id = pack.id;
-    world = pack.world;
+  socket.on('connect', function() {
+    socket.on('init', function(pack) {
+      id = pack.id;
+      world = pack.world;
 
-    setInterval(function() {
-      socket.emit('clientTick', world.players[id]);
-    }, 1000 / 60);
+      setInterval(function() {
+        socket.emit('clientTick', world.players[id]);
+      }, 1000 / 60);
 
-    socket.on('serverTick', function(pack) {
-      lastUpdate = new Date();
-      world.players = pack;
+      socket.on('serverTick', function(pack) {
+        lastUpdate = new Date();
+        world.players = pack;
+      });
+
+      socket.on('eatFood', function(pack) {
+        delete world.objects[pack.id];
+      });
     });
   });
-});
 
-var updateWorld = function updateWorld(data) {
-  var currUpdate = new Date();
-  for (var i = 0; i < world.players.length; i++) {
-    var player = world.players[i];
-    if (!player) {
-      // if vacant
-      continue;
+  var updateWorld = function updateWorld(data) {
+    var currUpdate = new Date();
+    for (var i = 0; i < world.players.length; i++) {
+      var player = world.players[i];
+      if (!player) {
+        // if vacant
+        continue;
+      }
+
+      console.log(player.id)
+
+      var h = (player.speed || world.default_speed) * (currUpdate - lastUpdate) / 1000;
+
+      player.pos.x += Math.cos(player.angle) * h
+      player.pos.y += Math.sin(player.angle) * h
+
+      player.pos.x = Math.max(0, Math.min(player.pos.x, world.width));
+      player.pos.y = Math.max(0, Math.min(player.pos.y, world.height));
     }
 
-    console.log(player.id)
-
-    var h = (player.speed || world.default_speed) * (currUpdate - lastUpdate) / 1000;
-
-    player.pos.x += Math.cos(player.angle) * h
-    player.pos.y += Math.sin(player.angle) * h
-
-    player.pos.x = Math.max(0, Math.min(player.pos.x, world.width));
-    player.pos.y = Math.max(0, Math.min(player.pos.y, world.height));
+    lastUpdate = new Date();
   }
 
-  lastUpdate = new Date();
-}
-
-var makeObject = function makeObject(obj) {
-  var circle = new Path2D();
-  circle.arc(obj.pos.x, obj.pos.y, obj.radius, 0, 2 * Math.PI);
-  return circle;
-}
-
-var renderObjects = function renderObjects(ctx, objArray) {
-  for (var i = 1; i < objArray.length; i++) {
-    var o = objArray[i];
-    if (!o) continue;
-    var obj = makeObject(o);
-    ctx.fillStyle = '#' + o.color;
-    ctx.fill(obj);
+  var makeObject = function makeObject(obj) {
+    var circle = new Path2D();
+    circle.arc(obj.pos.x, obj.pos.y, obj.radius, 0, 2 * Math.PI);
+    return circle;
   }
-}
 
-var draw = function draw() {
-  if (world) {
-    updateWorld(world)
-    ctx.clear(true);
-    ctx.save();
+  var renderObjects = function renderObjects(ctx, objArray) {
+    for (var i = 1; i < objArray.length; i++) {
+      var o = objArray[i];
+      if (!o) continue;
+      var obj = makeObject(o);
+      ctx.fillStyle = '#' + o.color;
+      ctx.fill(obj);
+    }
+  }
 
-    var me = world.players[id];
-    ctx.translate(-me.pos.x + 500 / 2, -me.pos.y + 500 / 2);
-    var obj = makeObject(me);
-    ctx.fillStyle = '#' + me.color;
-    ctx.fill(obj);
+  var draw = function draw() {
+    if (world) {
+      updateWorld(world)
+      ctx.clear(true);
+      ctx.save();
 
-    renderObjects(ctx, world.objects);
-    renderObjects(ctx, world.players);
+      var me = world.players[id];
+      ctx.translate(-me.pos.x + 500 / 2, -me.pos.y + 500 / 2);
+      var obj = makeObject(me);
+      ctx.fillStyle = '#' + me.color;
+      ctx.fill(obj);
 
-    ctx.restore();
+      renderObjects(ctx, world.objects);
+      renderObjects(ctx, world.players);
+
+      ctx.restore();
+    }
+
+    window.requestAnimationFrame(draw);
   }
 
   window.requestAnimationFrame(draw);
-}
-
-window.requestAnimationFrame(draw);
 });
