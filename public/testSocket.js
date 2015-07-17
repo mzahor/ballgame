@@ -15,8 +15,6 @@ var clip = function clip(x1, y1, x2, y2, world) {
   return clipped;
 }
 
-
-
 CanvasRenderingContext2D.prototype.clear =
   CanvasRenderingContext2D.prototype.clear || function(preserveTransform) {
     if (preserveTransform) {
@@ -77,9 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
         continue;
       }
 
-      console.log(player.id)
-
-      var h = (player.speed || world.default_speed) * (currUpdate - lastUpdate) / 1000;
+      var h = player.speed * (currUpdate - lastUpdate) / 1000;
 
       player.pos.x += Math.cos(player.angle) * h
       player.pos.y += Math.sin(player.angle) * h
