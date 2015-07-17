@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var ctx = canvas.getContext("2d");
   var world = null;
   var id = null;
+  var lastUpdate = new Date();
 
   socket.on('connect', function() {
     socket.on('init', function(initData) {
@@ -45,19 +46,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
       setInterval(function() {
         socket.emit('tick', {
-          angle: Math.PI,
+          angle: Math.random(),
           id: id
         });
       }, 500);
 
       socket.on('world', function(data) {
+        lastUpdate = new Date();
         world = data;
       });
     });
   });
 
+
+
+  var updateWorld = function updateWorld(data) {
+    var currUpdate = new Date();
+    for (var i = 0; i < world.objects.length; i++) {
+      var player = world.objects[i];
+      if (!player || player.type != 1) {
+        // if not a player
+        continue;
+      }
+      var h = (player.speed || world.default_speed) * (currUpdate - lastUpdate) / 1000;
+
+      player.pos.x += Math.cos(player.angle) * h
+      player.pos.y += Math.sin(player.angle) * h
+
+      player.pos.x = Math.max(0, Math.min(player.pos.x, world.width));
+      player.pos.y = Math.max(0, Math.min(player.pos.y, world.height));
+    }
+
+    lastUpdate = new Date();
+  }
+
   var draw = function draw() {
     if (world) {
+      updateWorld(world)
       ctx.clear(true);
       ctx.save();
 

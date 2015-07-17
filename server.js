@@ -12,7 +12,7 @@ var world = {
   height: 10000,
   width: 10000,
   objects: [],
-  default_speed: 1000 // pix/sec
+  default_speed: 100 // pix/sec
 };
 
 var lastUpdate = new Date();
@@ -93,7 +93,7 @@ io.on('connection', function(socket) {
 setInterval(function() {
   updateWorld();
   io.sockets.emit('world', world);
-}, 50);
+}, 1000/60);
 
 http.listen(3000, function() {
   console.log('listening on *:3000');
