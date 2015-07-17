@@ -55,8 +55,16 @@ document.addEventListener('DOMContentLoaded', function() {
       id = pack.id;
       world = pack.world;
 
-      socket.on('eatFood', function(pack) {
-        delete world.objects[pack.id];
+      socket.on('eatFood', function(pack) {        
+        pack.eatedFood.forEach(function(item, i, arr) {          
+          delete world.objects[item];
+        });
+      });
+
+      socket.on('generateFood', function(pack) {      
+        pack.objects.forEach(function(item, i, arr) {
+          world.objects[item.id]=item.object;
+        });
       });
 
       setInterval(function() {
