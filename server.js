@@ -12,7 +12,7 @@ var world = {
   height: 10000,
   width: 10000,
   objects: [],
-  default_speed: 20 // pix/sec
+  default_speed: 1000 // pix/sec
 };
 
 var lastUpdate = new Date();
@@ -69,11 +69,6 @@ io.on('connection', function(socket) {
 
   currId = idCounter++;
 
-  socket.emit('init', {
-    world: world,
-    id: currId
-  });
-
   world.objects[currId] = {
     type: 1,
     id: currId,
@@ -84,6 +79,11 @@ io.on('connection', function(socket) {
     radius: 30,
     angle: 0
   };
+
+  socket.emit('init', {
+    world: world,
+    id: currId
+  });
 
   socket.on('tick', function(data) {
     tick(data);
