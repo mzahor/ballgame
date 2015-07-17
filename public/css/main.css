@@ -5,3 +5,7 @@ html, body {
   background: #fff;
   margin:auto;
 }
+
+canvas {
+  border: black solid;
+}

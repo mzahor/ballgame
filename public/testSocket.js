@@ -15,8 +15,6 @@ var clip = function clip(x1, y1, x2, y2, world) {
   return clipped;
 }
 
-
-
 CanvasRenderingContext2D.prototype.clear =
   CanvasRenderingContext2D.prototype.clear || function(preserveTransform) {
     if (preserveTransform) {
@@ -33,8 +31,8 @@ CanvasRenderingContext2D.prototype.clear =
 
 document.addEventListener('DOMContentLoaded', function() {
   var canvas = document.getElementById("canvas");
-   canvas.width = CANV_WIDTH;
-   canvas.height = CANV_HEIGHT;
+  canvas.width = CANV_WIDTH;
+  canvas.height = CANV_HEIGHT;
   mousePos = {};
 
   canvas.addEventListener('mousemove', function(event) {
@@ -87,9 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
         continue;
       }
 
-      console.log(player.id)
-
-      var h = (player.speed || world.default_speed) * (currUpdate - lastUpdate) / 1000;
+      var h = player.speed * (currUpdate - lastUpdate) / 1000;
 
       player.pos.x += Math.cos(player.angle) * h
       player.pos.y += Math.sin(player.angle) * h
@@ -109,11 +105,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var renderObjects = function renderObjects(ctx, objArray) {
     for (var i = 1; i < objArray.length; i++) {
-      var o = objArray[i];
-      if (!o) continue;
-      var obj = makeObject(o);
-      ctx.fillStyle = '#' + o.color;
-      ctx.fill(obj);
+      var object = objArray[i];
+      if (!object) continue;
+      var pathObj = makeObject(object);
+      ctx.fillStyle = '#' + object.color;
+      ctx.fill(pathObj);
+
+      if (object.name) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'yellow';
+        ctx.font = 'bold 20px serif'
+        var width = ctx.measureText(object.name).width;
+        var height = ctx.measureText("w").width;
+        ctx.fillText(object.name, object.pos.x - width / 2, object.pos.y + height / 2);
+        ctx.restore();
+      }
     }
   }
 

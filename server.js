@@ -7,17 +7,20 @@ var io = require('socket.io')(http);
 app.use(express.static('public'));
 
 playerIdCounter = 1;
+
 var GENERATED_OBJ_COUNT = 1000;
 var eatedFood = [];
 var foodGenerationSpeed = 1000; // 1 max
+var STARTING_PLAYER_RADIUS = 30;
+var STARTING_SPEED = 400;
+var WORLD_UPDATE_RATE = 1000 / 60;
 
 
 var world = {
   height: 1000,
   width: 1000,
   objects: [],
-  players: [],
-  default_speed: 400 // pix/sec
+  players: []
 };
 
 var lastUpdate = new Date();
@@ -79,7 +82,7 @@ var updateWorld = function updateWorld(data) {
     }
 
     var currUpdate = new Date();
-    var h = (player.speed || world.default_speed) * (currUpdate - lastUpdate) / 1000;
+    var h = player.speed * (currUpdate - lastUpdate) / 1000;
 
     // console.log('angle: ', player.angle)
     // console.log("x move: ", Math.cos(player.angle) * h)
@@ -110,6 +113,7 @@ var handleOverlap = function(player, world) {
     if (hasOverlap(player, object)) {
       player.score = player.score + 1 || 1;
       player.radius += 0.1;
+      player.speed = Math.max(player.speed - 0.5, 50);  
       eatedFood.push(i);
       recentlyEatedFood.push(i);
       delete world.objects[i];      
@@ -141,8 +145,10 @@ io.on('connection', function(socket) {
       x: Math.floor(world.width / 2),
       y: Math.floor(world.height / 2)
     },
-    radius: 30,
+    radius: STARTING_PLAYER_RADIUS,
     angle: 0,
+    speed: STARTING_SPEED,
+    name: 'player' + currId,
     color: "2353ab"
   };
 
@@ -160,7 +166,7 @@ io.on('connection', function(socket) {
 setInterval(function() {
   updateWorld();
   io.sockets.emit('serverTick', world.players);
-}, 1000 / 60);
+}, WORLD_UPDATE_RATE);
 
 http.listen(3000, function() {
   console.log('listening on *:3000');
