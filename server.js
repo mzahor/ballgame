@@ -46,10 +46,10 @@ var generateWorld = function generateWorld() {
 
 var generateFood = function generateFood() {
   var foodDificit = eatedFood.length;
-  var newFoodCount = getRandomInt(0, foodDificit) / foodGenerationSpeed;  
+  var newFoodCount = getRandomInt(0, foodDificit) / foodGenerationSpeed;
   var newFood = [];
   for (var i = 0; i < newFoodCount; i++) {
-    var id =  eatedFood.pop();
+    var id = eatedFood.pop();
     var food = {
       // not a player
       type: 0,
@@ -62,11 +62,13 @@ var generateFood = function generateFood() {
     };
     world.objects[id] = food;
     newFood.push({
-            id: id,
-            object: world.objects[id]
-      })
+      id: id,
+      object: world.objects[id]
+    })
   }
-  io.sockets.emit('generateFood', {objects:newFood});
+  io.sockets.emit('generateFood', {
+    objects: newFood
+  });
 };
 
 generateWorld();
@@ -113,15 +115,16 @@ var handleOverlap = function(player, world) {
     if (hasOverlap(player, object)) {
       player.score = player.score + 1 || 1;
       player.radius += 0.1;
-      player.speed = Math.max(player.speed - 0.5, 50);  
+      player.speed = Math.max(player.speed - 0.5, 50);
       eatedFood.push(i);
       recentlyEatedFood.push(i);
-      delete world.objects[i];      
+      delete world.objects[i];
     }
   }
+  
   io.sockets.emit('eatFood', {
-        eatedFood: recentlyEatedFood
-      });
+    eatedFood: recentlyEatedFood
+  });
 }
 
 var hasOverlap = function(player, object) {
