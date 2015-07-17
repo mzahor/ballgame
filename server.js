@@ -7,9 +7,11 @@ var io = require('socket.io')(http);
 app.use(express.static('public'));
 
 playerIdCounter = 1;
+
 var GENERATED_OBJ_COUNT = 1000;
-var STARTION_PLAYER_RADIUS = 30;
+var STARTING_PLAYER_RADIUS = 30;
 var STARTING_SPEED = 400;
+var WORLD_UPDATE_RATE = 1000 / 60;
 
 var world = {
   height: 1000,
@@ -109,7 +111,7 @@ io.on('connection', function(socket) {
       x: Math.floor(world.width / 2),
       y: Math.floor(world.height / 2)
     },
-    radius: STARTION_PLAYER_RADIUS,
+    radius: STARTING_PLAYER_RADIUS,
     angle: 0,
     speed: STARTING_SPEED,
     name: 'player' + currId,
@@ -130,7 +132,7 @@ io.on('connection', function(socket) {
 setInterval(function() {
   updateWorld();
   io.sockets.emit('serverTick', world.players);
-}, 1000 / 60);
+}, WORLD_UPDATE_RATE);
 
 http.listen(3000, function() {
   console.log('listening on *:3000');
