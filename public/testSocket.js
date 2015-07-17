@@ -41,33 +41,33 @@ document.addEventListener('DOMContentLoaded', function() {
   var lastUpdate = new Date();
 
   socket.on('connect', function() {
-    socket.on('init', function(initData) {
-      id = initData.id;
+    socket.on('init', function(pack) {
+      id = pack.id;
+      world = pack.world;
 
       setInterval(function() {
-        socket.emit('tick', {
-          angle: Math.random(),
+        socket.emit('clientTick', {
+          angle: Math.random() * 3,
           id: id
         });
       }, 500);
 
-      socket.on('world', function(data) {
+      socket.on('serverTick', function(pack) {
         lastUpdate = new Date();
-        world = data;
+        world.players = pack;
       });
     });
   });
 
-
-
   var updateWorld = function updateWorld(data) {
     var currUpdate = new Date();
-    for (var i = 0; i < world.objects.length; i++) {
-      var player = world.objects[i];
-      if (!player || player.type != 1) {
-        // if not a player
+    for (var i = 0; i < world.players.length; i++) {
+      var player = world.players[i];
+      if (!player) {
+        // if vacant
         continue;
       }
+
       var h = (player.speed || world.default_speed) * (currUpdate - lastUpdate) / 1000;
 
       player.pos.x += Math.cos(player.angle) * h
@@ -80,28 +80,36 @@ document.addEventListener('DOMContentLoaded', function() {
     lastUpdate = new Date();
   }
 
+  var renderObjects = function renderObjects(ctx, objArray) {
+    for (var i = 1; i < objArray.length; i++) {
+      var o = objArray[i];
+      if (!o) continue;
+      var obj = makeObject(o);
+      ctx.fillStyle = '#' + o.color;
+      ctx.fill(obj);
+    }
+  }
+
   var draw = function draw() {
     if (world) {
       updateWorld(world)
       ctx.clear(true);
       ctx.save();
 
-      var me = world.objects[id];
+      var me = world.players[id];
       ctx.translate(-me.pos.x + 500 / 2, -me.pos.y + 500 / 2);
       var obj = makeObject(me);
+      ctx.fillStyle = '#' + me.color;
       ctx.fill(obj);
 
-      for (var i = 1; i < world.objects.length; i++) {
-        var o = world.objects[i];
-        if (!o) continue;
-        var obj = makeObject(o);
-        ctx.fill(obj);
-      }
+      renderObjects(ctx, world.objects);
+      renderObjects(ctx, world.players);
 
       ctx.restore();
     }
 
     window.requestAnimationFrame(draw);
   }
+
   window.requestAnimationFrame(draw);
 });

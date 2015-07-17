@@ -6,36 +6,33 @@ var io = require('socket.io')(http);
 
 app.use(express.static('public'));
 
-idCounter = 1;
+playerIdCounter = 1;
 
 var world = {
   height: 10000,
   width: 10000,
   objects: [],
-  default_speed: 100 // pix/sec
+  players: [],
+  default_speed: 400 // pix/sec
 };
 
 var lastUpdate = new Date();
-
-var tick = function tick(data) {
-  var player = world.objects[data.id];
-  player.angle = data.angle;
-}
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
 var generateWorld = function generateWorld() {
-  for (idCounter = 1; idCounter < 10000; idCounter++) {
-    world.objects[idCounter] = {
+  for (var i = 1; i < 1000; i++) {
+    world.objects[i] = {
       // not a player
       type: 0,
       pos: {
         x: getRandomInt(0, world.width),
         y: getRandomInt(0, world.height),
       },
-      radius: 10
+      radius: 10,
+      color: "bbaa23"
     };
   }
 };
@@ -43,13 +40,14 @@ var generateWorld = function generateWorld() {
 generateWorld();
 
 var updateWorld = function updateWorld(data) {
-  var currUpdate = new Date();
-  for (var i = 0; i < idCounter; i++) {
-    var player = world.objects[i];
-    if (!player || player.type != 1) {
-      // if not a player
+  for (var i = 0; i < playerIdCounter; i++) {
+    var player = world.players[i];
+    if (!player) {
+      // if vacant
       continue;
     }
+
+    var currUpdate = new Date();
     var h = (player.speed || world.default_speed) * (currUpdate - lastUpdate) / 1000;
 
     player.pos.x += Math.cos(player.angle) * h
@@ -67,9 +65,9 @@ io.on('connection', function(socket) {
 
   });
 
-  currId = idCounter++;
+  currId = playerIdCounter++;
 
-  world.objects[currId] = {
+  world.players[currId] = {
     type: 1,
     id: currId,
     pos: {
@@ -77,7 +75,8 @@ io.on('connection', function(socket) {
       y: Math.floor(world.height / 2)
     },
     radius: 30,
-    angle: 0
+    angle: 0,
+    color: "2353ab"
   };
 
   socket.emit('init', {
@@ -85,14 +84,15 @@ io.on('connection', function(socket) {
     id: currId
   });
 
-  socket.on('tick', function(data) {
-    tick(data);
+  socket.on('clientTick', function(pack) {
+    var player = world.objects[pack.id];
+    player.angle = pack.angle;
   });
 });
 
 setInterval(function() {
   updateWorld();
-  io.sockets.emit('world', world);
+  io.sockets.emit('serverTick', world.players);
 }, 1000/60);
 
 http.listen(3000, function() {
