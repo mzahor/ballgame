@@ -60,9 +60,27 @@ var updateWorld = function updateWorld(data) {
 
     player.pos.x = Math.max(0, Math.min(player.pos.x, world.width));
     player.pos.y = Math.max(0, Math.min(player.pos.y, world.height));
+
+    handleOverlap(player, world);
   }
 
   lastUpdate = new Date();
+}
+
+var handleOverlap = function(player, world) {
+  for (var i = 0; i < playerIdCounter; i++) {
+    var player = world.players[i];
+    if (!player) {
+      // if vacant
+      continue;
+    }
+  }
+}
+
+var hasOverlap = function(player, object) {
+  var distance = Math.sqrt(
+    Math.pow(player.pos.x - object.pos.x, 2) +
+    Math.pow(player.pos.y - object.pos.y, 2));
 }
 
 io.on('connection', function(socket) {
@@ -98,7 +116,7 @@ io.on('connection', function(socket) {
 setInterval(function() {
   updateWorld();
   io.sockets.emit('serverTick', world.players);
-}, 1000/60);
+}, 1000 / 60);
 
 http.listen(3000, function() {
   console.log('listening on *:3000');
