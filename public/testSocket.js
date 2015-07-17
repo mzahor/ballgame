@@ -53,6 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
       id = pack.id;
       world = pack.world;
 
+      socket.on('eatFood', function(pack) {
+        delete world.objects[pack.id];
+      });
+
       setInterval(function() {
         socket.emit('clientTick', world.players[id]);
       }, 1000 / 60);
@@ -60,10 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
       socket.on('serverTick', function(pack) {
         lastUpdate = new Date();
         world.players = pack;
-      });
-
-      socket.on('eatFood', function(pack) {
-        delete world.objects[pack.id];
       });
     });
   });
