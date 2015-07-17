@@ -1,6 +1,6 @@
 var socket = io();
-CANV_HEIGHT = 500;
-CANV_WIDTH = 500;
+CANV_HEIGHT = window.innerHeight;
+CANV_WIDTH = window.innerWidth;
 
 var clip = function clip(x1, y1, x2, y2, world) {
   var clipped = [];
@@ -33,6 +33,8 @@ CanvasRenderingContext2D.prototype.clear =
 
 document.addEventListener('DOMContentLoaded', function() {
   var canvas = document.getElementById("canvas");
+   canvas.width = CANV_WIDTH;
+   canvas.height = CANV_HEIGHT;
   mousePos = {};
 
   canvas.addEventListener('mousemove', function(event) {
@@ -114,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
       ctx.save();
 
       var me = world.players[id];
-      ctx.translate(-me.pos.x + 500 / 2, -me.pos.y + 500 / 2);
+      ctx.translate(-me.pos.x + CANV_WIDTH / 2, -me.pos.y + CANV_HEIGHT / 2);
       var obj = makeObject(me);
       ctx.fillStyle = '#' + me.color;
       ctx.fill(obj);
