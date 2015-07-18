@@ -6,17 +6,22 @@ var io = require('socket.io')(http);
 
 app.use(express.static('public'));
 
-var GENERATED_OBJ_COUNT = 1000;
+var GENERATED_OBJ_COUNT = 100;
 var FOOD_GENERATION_SPEED = 1000; // 1 max
 var STARTING_PLAYER_RADIUS = 30;
 var STARTING_SPEED = 400;
 var WORLD_UPDATE_RATE = 1000 / 60;
-var WORLD_HEIGHT = 10000;
-var WORLD_WIDTH = 10000;
+var WORLD_HEIGHT = 1000;
+var WORLD_WIDTH = 1000;
+var FOOD_INC_AMOUNT = 0.3;
 
-playerIdCounter = 1;
+var playerIdCounter = 1;
+
 var eatedFood = [];
 var eatedPlayers = [];
+var recentlyEatedFood = [];
+var recentlyEatedPlayers = [];
+var newFood = [];
 
 var world = {
   height: WORLD_HEIGHT,
@@ -49,7 +54,7 @@ var generateWorld = function generateWorld() {
 var generateFood = function generateFood() {
   var foodDificit = eatedFood.length;
   var newFoodCount = getRandomInt(0, foodDificit) / FOOD_GENERATION_SPEED;
-  var newFood = [];
+  newFood = [];
   for (var i = 0; i < newFoodCount; i++) {
     var id = eatedFood.pop();
     var food = {
@@ -66,11 +71,8 @@ var generateFood = function generateFood() {
     newFood.push({
       id: id,
       object: world.objects[id]
-    })
+    });
   }
-  io.sockets.emit('generateFood', {
-    objects: newFood
-  });
 };
 
 generateWorld();
@@ -104,19 +106,19 @@ var updateWorld = function updateWorld(data) {
 }
 
 var handleCollision = function(player, world) {
-  var recentlyEatedFood = [];
-  var recentlyEatedPlayers = [];
+  recentlyEatedFood = [];
+  recentlyEatedPlayers = [];
 
   for (var i = 0; i < world.objects.length; i++) {
     var object = world.objects[i];
+
     if (!object) {
       // if vacant
       continue;
     }
 
     if (hasCollision(player, object)) {
-      player.score = player.score + 1 || 1;
-      player.radius += 0.1;
+      player.radius += FOOD_INC_AMOUNT;
       eatedFood.push(i);
       recentlyEatedFood.push(i);
       delete world.objects[i];
@@ -125,23 +127,18 @@ var handleCollision = function(player, world) {
 
   for (var i = 0; i < world.players.length; i++) {
     var pl = world.players[i];
-    if (!pl) {
-      // if vacant
+
+    if (!pl || pl.id === player.id) {
       continue;
     }
 
-    if (hasCollision(player, pl)) {
-      player.score = player.score + pl.radius || pl.radius;
-      player.radius += 0.1;
+    if (hasOverlap(player, pl) && player.radius > pl.radius) {
+      player.radius += pl.radius;
       eatedPlayers.push(i);
       recentlyEatedPlayers.push(i);
-      delete world.objects[i];
+      delete world.players[i];
     }
   }
-
-  io.sockets.emit('eatFood', {
-    eatedFood: recentlyEatedFood
-  });
 }
 
 var hasCollision = function(player, object) {
@@ -192,7 +189,15 @@ io.on('connection', function(socket) {
 
 setInterval(function() {
   updateWorld();
-  io.sockets.emit('serverTick', world.players);
+  io.sockets.emit('serverTick', {
+    players: world.players,
+    eatedFood: recentlyEatedFood,
+    eatedPlayers: recentlyEatedPlayers,
+    newFood: newFood
+  });
+  recentlyEatedFood = [];
+  recentlyEatedPlayers = [];
+  newFood = [];
 }, WORLD_UPDATE_RATE);
 
 http.listen(3000, function() {
