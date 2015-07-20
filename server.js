@@ -89,7 +89,7 @@ var updateWorld = function updateWorld(data) {
     }
 
     var currUpdate = new Date();
-    var h = player.speed * (currUpdate - lastUpdate) / 1000;
+    var h = (STARTING_SPEED - Math.sqrt((player.radius - STARTING_PLAYER_RADIUS) * 2)) * (currUpdate - lastUpdate) / 1000;
 
     // console.log('angle: ', player.angle)
     // console.log("x move: ", Math.cos(player.angle) * h)
@@ -179,7 +179,6 @@ io.on('connection', function(socket) {
     },
     radius: STARTING_PLAYER_RADIUS,
     angle: 0,
-    speed: STARTING_SPEED,
     name: 'player' + currId,
     color: "2353ab"
   };
