@@ -1,6 +1,7 @@
 var socket = io();
 CANV_HEIGHT = window.innerHeight;
 CANV_WIDTH = window.innerWidth;
+var ZOOM = 2;
 
 var clip = function clip(x1, y1, x2, y2, world) {
   var clipped = [];
@@ -22,7 +23,7 @@ CanvasRenderingContext2D.prototype.clear =
       this.setTransform(1, 0, 0, 1, 0, 0);
     }
 
-    this.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.clearRect(0, 0, this.canvas.width*ZOOM, this.canvas.height*ZOOM);
 
     if (preserveTransform) {
       this.restore();
@@ -42,6 +43,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     me.angle = Math.atan2(mousePos.y - CANV_HEIGHT / 2, mousePos.x - CANV_WIDTH / 2);
   });
+
+  canvas.addEventListener('mousewheel',function(event){
+
+    var delta = event.deltaY || event.detail || event.wheelDelta;
+    if      (delta === 100)
+    {ZOOM = ZOOM + 0.01;}
+  else
+    {ZOOM = ZOOM - 0.01;}
+ 
+});
 
   var ctx = canvas.getContext("2d");
   var world = null;
@@ -99,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var makeObject = function makeObject(obj) {
     var circle = new Path2D();
-    circle.arc(obj.pos.x, obj.pos.y, obj.radius, 0, 2 * Math.PI);
+    circle.arc(obj.pos.x*ZOOM, obj.pos.y*ZOOM, obj.radius*ZOOM, 0, 2 * Math.PI);
     return circle;
   }
 
@@ -118,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.font = 'bold 20px serif'
         var width = ctx.measureText(object.name).width;
         var height = ctx.measureText("w").width;
-        ctx.fillText(object.name, object.pos.x - width / 2, object.pos.y + height / 2);
+        ctx.fillText(object.name, object.pos.x*ZOOM - width / 2, object.pos.y*ZOOM + height / 2);
         ctx.restore();
       }
     }
@@ -131,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
       ctx.save();
 
       var me = world.players[id];
-      ctx.translate(-me.pos.x + CANV_WIDTH / 2, -me.pos.y + CANV_HEIGHT / 2);
+      ctx.translate((-me.pos.x*ZOOM + CANV_WIDTH / 2), (-me.pos.y*ZOOM + CANV_HEIGHT / 2));
       var obj = makeObject(me);
       ctx.fillStyle = '#' + me.color;
       ctx.fill(obj);
