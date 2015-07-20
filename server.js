@@ -7,6 +7,7 @@ var io = require('socket.io')(http);
 app.use(express.static('public'));
 
 var GENERATED_OBJ_COUNT = 100;
+var BADGENERATED_OBJ_COUNT = 30;
 var FOOD_GENERATION_SPEED = 1000; // 1 max
 var STARTING_PLAYER_RADIUS = 30;
 var STARTING_SPEED = 400;
@@ -37,16 +38,17 @@ function getRandomInt(min, max) {
 }
 
 var generateWorld = function generateWorld() {
-  for (var i = 1; i < GENERATED_OBJ_COUNT; i++) {
+  for (var i = 1; i < GENERATED_OBJ_COUNT+BADGENERATED_OBJ_COUNT; i++) {
+ 
     world.objects[i] = {
       // not a player
-      type: 0,
+      type: i<GENERATED_OBJ_COUNT ? 0 : 1,
       pos: {
         x: getRandomInt(0, world.width),
         y: getRandomInt(0, world.height),
       },
       radius: 10,
-      color: "bbaa23"
+      color: i<GENERATED_OBJ_COUNT ? "bbaa23" : "ff0000",
     };
   }
 };
@@ -59,13 +61,13 @@ var generateFood = function generateFood() {
     var id = eatedFood.pop();
     var food = {
       // not a player
-      type: 0,
+      type: id<GENERATED_OBJ_COUNT ? 0 : 1,
       pos: {
         x: getRandomInt(0, world.width),
         y: getRandomInt(0, world.height),
       },
       radius: 10,
-      color: "bbaa23"
+      color: id<GENERATED_OBJ_COUNT ? "bbaa23" : "ff0000"
     };
     world.objects[id] = food;
     newFood.push({
@@ -118,7 +120,13 @@ var handleCollision = function(player, world) {
     }
 
     if (hasCollision(player, object)) {
-      player.radius += FOOD_INC_AMOUNT;
+      if(object.type === 0)
+      {
+        player.radius += FOOD_INC_AMOUNT;
+      }
+      else{
+        player.radius -= 2 * FOOD_INC_AMOUNT;
+      }
       eatedFood.push(i);
       recentlyEatedFood.push(i);
       delete world.objects[i];
