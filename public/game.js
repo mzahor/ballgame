@@ -2,6 +2,8 @@ var socket = io();
 var CANV_HEIGHT = window.innerHeight;
 var CANV_WIDTH = window.innerWidth;
 var ZOOM = 2;
+var MAX_ZOOM = 5;
+var MIN_ZOOM = 0.01;
 var STARTING_SPEED = 400;
 var STARTING_PLAYER_RADIUS = 30;
 
@@ -57,6 +59,12 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       ZOOM = ZOOM - 0.01;
     }
+    if(ZOOM < MIN_ZOOM){
+        ZOOM = MIN_ZOOM;
+      }
+      if(ZOOM > MAX_ZOOM){
+        ZOOM = MAX_ZOOM;
+      }
   });
 
   var ctx = canvas.getContext("2d");
