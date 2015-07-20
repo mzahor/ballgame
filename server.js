@@ -8,6 +8,7 @@ app.use(express.static('public'));
 
 var GENERATED_OBJ_COUNT = 100;
 var BADGENERATED_OBJ_COUNT = 30;
+var BAD_OBJ_IMPACT = 3;
 var FOOD_GENERATION_SPEED = 1000; // 1 max
 var STARTING_PLAYER_RADIUS = 30;
 var STARTING_SPEED = 400;
@@ -31,6 +32,11 @@ var world = {
   players: []
 };
 
+var obj_types = {
+  food:0,
+  poison:1
+}
+
 var lastUpdate = new Date();
 
 function getRandomInt(min, max) {
@@ -42,13 +48,13 @@ var generateWorld = function generateWorld() {
  
     world.objects[i] = {
       // not a player
-      type: i<GENERATED_OBJ_COUNT ? 0 : 1,
+      type: i < GENERATED_OBJ_COUNT ? obj_types.food : obj_types.poison,
       pos: {
         x: getRandomInt(0, world.width),
         y: getRandomInt(0, world.height),
       },
-      radius: 10,
-      color: i<GENERATED_OBJ_COUNT ? "bbaa23" : "ff0000",
+      radius: i < GENERATED_OBJ_COUNT ? 10 : 20,
+      color: i < GENERATED_OBJ_COUNT ? "bbaa23" : "ff0000",
     };
   }
 };
@@ -61,13 +67,13 @@ var generateFood = function generateFood() {
     var id = eatedFood.pop();
     var food = {
       // not a player
-      type: id<GENERATED_OBJ_COUNT ? 0 : 1,
+      type: id < GENERATED_OBJ_COUNT ? obj_types.food : obj_types.poison,
       pos: {
         x: getRandomInt(0, world.width),
         y: getRandomInt(0, world.height),
       },
-      radius: 10,
-      color: id<GENERATED_OBJ_COUNT ? "bbaa23" : "ff0000"
+      radius: id < GENERATED_OBJ_COUNT ? 10 : 20,
+      color: id < GENERATED_OBJ_COUNT ? "bbaa23" : "ff0000"
     };
     world.objects[id] = food;
     newFood.push({
@@ -90,7 +96,7 @@ var updateWorld = function updateWorld(data) {
 
     var currUpdate = new Date();
     var h = (STARTING_SPEED - Math.sqrt((player.radius - STARTING_PLAYER_RADIUS) * 2)) * (currUpdate - lastUpdate) / 1000;
-
+    if(!h){h=0;}
     // console.log('angle: ', player.angle)
     // console.log("x move: ", Math.cos(player.angle) * h)
     // console.log("y move: ", Math.sin(player.angle) * h)
@@ -120,12 +126,19 @@ var handleCollision = function(player, world) {
     }
 
     if (hasCollision(player, object)) {
-      if(object.type === 0)
-      {
+      if(object.type === obj_types.food){
         player.radius += FOOD_INC_AMOUNT;
       }
-      else{
-        player.radius -= 2 * FOOD_INC_AMOUNT;
+      else if (object.type === obj_types.poison){        
+        if((player.radius - BAD_OBJ_IMPACT * FOOD_INC_AMOUNT) < STARTING_PLAYER_RADIUS){
+          eatedPlayers.push(player.id);
+          recentlyEatedPlayers.push(player.id);
+          delete world.players[player.id];
+        }
+        else{
+        player.radius -= BAD_OBJ_IMPACT * FOOD_INC_AMOUNT;
+      }
+        console.dir(player);
       }
       eatedFood.push(i);
       recentlyEatedFood.push(i);
