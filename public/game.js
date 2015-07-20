@@ -1,7 +1,9 @@
 var socket = io();
-CANV_HEIGHT = window.innerHeight;
-CANV_WIDTH = window.innerWidth;
+var CANV_HEIGHT = window.innerHeight;
+var CANV_WIDTH = window.innerWidth;
 var ZOOM = 2;
+var STARTING_SPEED = 400;
+var STARTING_PLAYER_RADIUS = 30;
 
 var gameOver = false;
 
@@ -110,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         continue;
       }
 
-      var h = player.speed * (currUpdate - lastUpdate) / 1000;
+      var h = (STARTING_SPEED - Math.sqrt((player.radius - STARTING_PLAYER_RADIUS) * 2)) * (currUpdate - lastUpdate) / 1000;
 
       player.pos.x += Math.cos(player.angle) * h
       player.pos.y += Math.sin(player.angle) * h
