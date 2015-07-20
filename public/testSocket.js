@@ -3,6 +3,8 @@ CANV_HEIGHT = window.innerHeight;
 CANV_WIDTH = window.innerWidth;
 var ZOOM = 2;
 
+var gameOver = false;
+
 var clip = function clip(x1, y1, x2, y2, world) {
   var clipped = [];
   var obj = world.objects;
@@ -36,13 +38,15 @@ document.addEventListener('DOMContentLoaded', function() {
   canvas.height = CANV_HEIGHT;
   mousePos = {};
 
-  canvas.addEventListener('mousemove', function(event) {
+  var mouseMove = function mouseMove(event) {
     mousePos.x = event.offsetX;
     mousePos.y = event.offsetY;
     var me = world.players[id];
 
     me.angle = Math.atan2(mousePos.y - CANV_HEIGHT / 2, mousePos.x - CANV_WIDTH / 2);
-  });
+  }
+
+  canvas.addEventListener('mousemove', mouseMove);
 
   canvas.addEventListener('mousewheel',function(event){
 
@@ -58,31 +62,42 @@ document.addEventListener('DOMContentLoaded', function() {
   var world = null;
   var id = null;
   var lastUpdate = new Date();
+  var gameInterval;
 
   socket.on('connect', function() {
     socket.on('init', function(pack) {
       id = pack.id;
       world = pack.world;
 
-      socket.on('eatFood', function(pack) {        
-        pack.eatedFood.forEach(function(item, i, arr) {          
-          delete world.objects[item];
-        });
+      socket.on('generateFood', function(pack) {
+
       });
 
-      socket.on('generateFood', function(pack) {      
-        pack.objects.forEach(function(item, i, arr) {
-          world.objects[item.id]=item.object;
-        });
-      });
-
-      setInterval(function() {
+      gameInterval = setInterval(function() {
         socket.emit('clientTick', world.players[id]);
       }, 1000 / 60);
 
       socket.on('serverTick', function(pack) {
         lastUpdate = new Date();
-        world.players = pack;
+        world.players = pack.players;
+
+        pack.eatedFood.forEach(function(item, i, arr) {
+          delete world.objects[item];
+        });
+
+        pack.newFood.forEach(function(item, i, arr) {
+          world.objects[item.id] = item.object;
+        });
+
+        pack.eatedPlayers.forEach(function(p) {
+          console.log(p)
+          if (p === id) {
+            clearInterval(gameInterval);
+            socket.removeAllListeners('serverTick');
+            canvas.removeEventListener('mousemove', mouseMove);
+            alert('Game over');
+          }
+        });
       });
     });
   });
