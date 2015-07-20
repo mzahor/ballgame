@@ -49,14 +49,12 @@ document.addEventListener('DOMContentLoaded', function() {
   canvas.addEventListener('mousemove', mouseMove);
 
   canvas.addEventListener('mousewheel', function(event) {
-
     var delta = event.deltaY || event.detail || event.wheelDelta;
     if (delta === 100) {
       ZOOM = ZOOM + 0.01;
     } else {
       ZOOM = ZOOM - 0.01;
     }
-
   });
 
   var ctx = canvas.getContext("2d");
