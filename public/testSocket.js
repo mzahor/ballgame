@@ -48,15 +48,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
   canvas.addEventListener('mousemove', mouseMove);
 
-  canvas.addEventListener('mousewheel',function(event){
+  canvas.addEventListener('mousewheel', function(event) {
 
     var delta = event.deltaY || event.detail || event.wheelDelta;
-    if      (delta === 100)
-    {ZOOM = ZOOM + 0.01;}
-  else
-    {ZOOM = ZOOM - 0.01;}
- 
-});
+    if (delta === 100) {
+      ZOOM = ZOOM + 0.01;
+    } else {
+      ZOOM = ZOOM - 0.01;
+    }
+
+  });
 
   var ctx = canvas.getContext("2d");
   var world = null;
@@ -125,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var makeObject = function makeObject(obj) {
     var circle = new Path2D();
-    circle.arc(obj.pos.x*ZOOM, obj.pos.y*ZOOM, obj.radius*ZOOM, 0, 2 * Math.PI);
+    circle.arc(obj.pos.x * ZOOM, obj.pos.y * ZOOM, obj.radius * ZOOM, 0, 2 * Math.PI);
     return circle;
   }
 
@@ -144,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.font = 'bold 20px serif'
         var width = ctx.measureText(object.name).width;
         var height = ctx.measureText("w").width;
-        ctx.fillText(object.name, object.pos.x*ZOOM - width / 2, object.pos.y*ZOOM + height / 2);
+        ctx.fillText(object.name, object.pos.x * ZOOM - width / 2, object.pos.y * ZOOM + height / 2);
         ctx.restore();
       }
     }
@@ -157,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
       ctx.save();
 
       var me = world.players[id];
-      ctx.translate((-me.pos.x*ZOOM + CANV_WIDTH / 2), (-me.pos.y*ZOOM + CANV_HEIGHT / 2));
+      ctx.translate((-me.pos.x * ZOOM + CANV_WIDTH / 2), (-me.pos.y * ZOOM + CANV_HEIGHT / 2));
       var obj = makeObject(me);
       ctx.fillStyle = '#' + me.color;
       ctx.fill(obj);
